@@ -93,5 +93,4 @@ Total brut : **5,54 $**, ramené à **0,00 $** net grâce à *Other savings*
 | Suppressions Datastore (`Cloud Firestore Entity Deletes`) | `1 451 121` | `0,28 $` |
 | Instances frontend (`Frontend Instances`) | `4,96 h` | `0,00 $` |
 | Instances backend (`Backend Instances`) | `7,5 h` | `0,00 $` |
-| Autres lignes (Small Ops, logs, bande passante, Cloud Build, Artifact Registry) | Voir rapport GCP | `0,00 $` |
 
