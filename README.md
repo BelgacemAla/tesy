@@ -75,7 +75,7 @@ Question du projet : qu'est-ce qui passe à l'échelle, jusqu'où, et pourquoi ?
 
 ## 4. Validité
 
-1. **Instances** : vérifié avec `X-Instance` : `1` instance en P1 et P3, et `1`, `2` ou `4` selon `N` en P2. OK
+1. **Instances** : vérifié avec `X-Instance` : `1` instance en P1 et P3, et `1`, `2` ou `4` selon `N` en P2
 2. **Ordre des runs** : mélangé avec `shuf` dans `run_p1.sh` (l.22), `run_p2.sh` (l.11) et `run_p3.sh` (l.11), noté dans `logs/*_ordre.txt`, avec pauses (`3 s` ou `5 s`) et échauffement. Par contre, `N` a été testé dans l'ordre `1, 2, 4` et les parties se sont suivies le 26 novembre 2026 (`14h54` en P1, `15h10–15h32` en P2, `16h30` en P3), donc un effet d'ordre entre parties reste possible
 3. **Réseau** : environ `11` à `17 ms` (jusqu'à `21,75 ms` à `F = 100`).
 4. **Échecs** : tout statut `!= 200` compté en échec ; seuls `200` et `0` (timeout/erreur client Locust) vus. `0` échec en P1 et P3 ; `1` à `15` échecs en P2 pour `C = 16, 32, 64` (< 1,3 %), sans changer les tendances
