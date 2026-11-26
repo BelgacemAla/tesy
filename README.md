@@ -4,55 +4,55 @@ Question du projet : qu'est-ce qui passe à l'échelle, jusqu'où, et pourquoi ?
 
 ## 1. Montage
 
-* Projet `monprojet-515813` en `europe-west1`, sur App Engine standard (`python312`) et Datastore.
-* Lancement avec `gunicorn -b :$PORT main:app` (sans `--workers`, donc je suppose 1 seul worker par instance, sans l'avoir vérifié dans les logs).
-* Version `default` (`app.yaml`) : classe `F1`, autoscaling jusqu'à 10 instances (`20261125t141537` et `20261126t140850`).
-* Versions `fixedN` (`deploy_fixed.sh`) : classe `B1`, manual scaling à `N` instances (`fixed1`, `fixed2`, `fixed4`), déployées en `--no-promote` et arrêtées après les tests.
-* Client Locust lancé depuis Cloud Shell, runs d'environ 45 s, mesures faites le 26 novembre 2026 avec les jeux `base`, `u100`, `u10000`, `p10`, `p100`, `p1000` et `f05` à `f100` (`bench/seed_exact.py`).
-* Dépôt : 67 CSV dans `raw/` (26 en P1, 21 en P2, 20 en P3), graphiques/CSV dans `figures/`, scripts dans `scripts/`, `patches/main_original.py` et `patches/main_corrige.py` (`main.py` contient le code corrigé).
-* Commande pour refaire toutes les figures : `bash scripts/make_figures.sh`.
+* Projet `monprojet-515813` en `europe-west1`, sur App Engine standard (`python312`) et Datastore
+* Lancement avec `gunicorn -b :$PORT main:app` (sans `--workers` je suppose 1 seul worker par instance, sans l'avoir vérifié dans les logs)
+* Version `default` (`app.yaml`) : classe `F1` autoscaling jusqu'à 10 instances (`20261125t141537` et `20261126t140850`)
+* Versions `fixedN` (`deploy_fixed.sh`) : classe `B1`, manual scaling à `N` instances (`fixed1`, `fixed2`, `fixed4`), déployées en `--no-promote` et arrêtées après les tests
+* Client Locust lancé depuis Cloud Shell, runs d'environ 45 s, mesures faites le 26 novembre 2026 avec les jeux `base`, `u100`, `u10000`, `p10`, `p100`, `p1000` et `f05` à `f100` (`bench/seed_exact.py`)
+* Dépôt : 67 CSV dans `raw/` (26 en P1, 21 en P2, 20 en P3), graphiques/CSV dans `figures/`, scripts dans `scripts/`, `patches/main_original.py` et `patches/main_corrige.py` (`main.py` contient le code corrigé)
+* Commande pour refaire toutes les figures : `bash scripts/make_figures.sh`
 
 ## 2. Résultats
 
 ### Partie 1 : coût d'une requête
 
-* **Hypothèse** : `get_timeline` lit l'utilisateur par clé puis fait une requête `Post` avec `IN` triée par date et limitée à 20 posts. Donc le temps devrait rester constant pour `U` et `P`, et monter doucement avec `F`.
-* **Protocole** : `fixed1` (1 instance), 1 utilisateur Locust (`-u 1`), un seul facteur varié à la fois.
+* **Hypothèse** : `get_timeline` lit l'utilisateur par clé puis fait une requête `Post` avec `IN` triée par date et limitée à 20 posts. Donc le temps devrait rester constant pour `U` et `P`, et monter doucement avec `F`
+* **Protocole** : `fixed1` (1 instance), 1 utilisateur Locust (`-u 1`), un seul facteur varié à la fois
 
 ![Fig. 1a](figures/fig1a.png)
 
 ![Fig. 1b](figures/fig1b.png)
 
 * **Résultats** :
-  * `U` (`100`, `1000`, `10000`) : `27,2 ms`, `24,5 ms`, `25,2 ms` (constant).
-  * `P` (`10`, `100`, `1000`) : `27,5 ms`, `26,4 ms`, `26,2 ms` (constant).
-  * `F` de `5` à `25` : `23,8 ms` à `26,6 ms` (presque constant).
-  * `F = 30` : saut à `484,4 ms`, puis montée jusqu'à `1611,4 ms` à `F = 100`.
-* **Interprétation** : hypothèse ok pour `U` et `P`, mais pas pour `F` à cause du saut à `F = 30`. Le filtre `IN` accepte 30 valeurs max : avec `F + 1` auteurs (les suivis + l'utilisateur), `F = 25` fait 26 valeurs et `F = 30` fait 31 valeurs. Le code passe alors sur une requête par auteur l'une après l'autre (`~15,6 ms` par auteur à `F = 30`, `~16 ms` à `F = 100`).
-* **Réseau** (`client - serveur`) : environ `11` à `17 ms` (jusqu'à `21,75 ms` à `F = 100`), soit ~1/3 quand c'est rapide et ~1,3 % à `F = 100`.
+  * `U` (`100`, `1000`, `10000`) : `27,2 ms`, `24,5 ms`, `25,2 ms` (constant)
+  * `P` (`10`, `100`, `1000`) : `27,5 ms`, `26,4 ms`, `26,2 ms` (constant)
+  * `F` de `5` à `25` : `23,8 ms` à `26,6 ms` (presque constant)
+  * `F = 30` : saut à `484,4 ms`, puis montée jusqu'à `1611,4 ms` à `F = 100`
+* **Interprétation** : hypothèse ok pour `U` et `P`, mais pas pour `F` à cause du saut à `F = 30`  Le filtre `IN` accepte 30 valeurs max : avec `F + 1` auteurs (les suivis + l'utilisateur), `F = 25` fait 26 valeurs et `F = 30` fait 31 valeurs. Le code passe alors sur une requête par auteur l'une après l'autre (`~15,6 ms` par auteur à `F = 30`, `~16 ms` à `F = 100`)
+* **Réseau** (`client - serveur`) : environ `11` à `17 ms` (jusqu'à `21,75 ms` à `F = 100`), soit ~1/3 quand c'est rapide et ~1,3 % à `F = 100`
 * **Entités lues et coût pour 1 million de timelines** (calcul depuis le code et ma facture à `1,99 $` pour `3 415 144` lectures, soit `~0,0583 $` / 100k lectures ; grille officielle à vérifier) :
-  * `U`, `P` quelconques, `F <= 25` : `21` entités (`1` User + `20` posts max) → `~12 $`.
-  * `F = 30` (code d'origine) : `621` entités (`1` User + `31 × 20`) → `~362 $`.
-  * `F = 100` (code d'origine) : `2021` entités (`1` User + `101 × 20`) → `~1 178 $`.
+  * `U`, `P` quelconques, `F <= 25` : `21` entités (`1` User + `20` posts max) → `~12 $`
+  * `F = 30` (code d'origine) : `621` entités (`1` User + `31 × 20`) → `~362 $`
+  * `F = 100` (code d'origine) : `2021` entités (`1` User + `101 × 20`) → `~1 178 $`
 
 ### Partie 2 : capacité
 
-* **Hypothèse** : avec 1 worker Gunicorn par instance et ~40 ms par requête, une instance devrait faire ~25 req/s, et `N` instances ~`N` fois plus, avec saturation dès que `C` dépasse `N`.
-* **Protocole** : `fixed1`, `fixed2`, `fixed4`, jeu `base`, `C` de `1` à `64`.
+* **Hypothèse** : avec 1 worker Gunicorn par instance et ~40 ms par requête, une instance devrait faire ~25 req/s, et `N` instances ~`N` fois plus, avec saturation dès que `C` dépasse `N`
+* **Protocole** : `fixed1`, `fixed2`, `fixed4`, jeu `base`, `C` de `1` à `64`
 
 ![Fig. 2a](figures/fig2a.png)
 
 ![Fig. 2b](figures/fig2b.png)
 
 * **Résultats** :
-  * Débit max : `25,90 req/s` (`N = 1`, déjà `22,83` à `C = 1`), `52,54 req/s` (`N = 2`), `84,08 req/s` (`N = 4`).
-  * Loi de Little (`latence ≈ C / débit`) : proche à faible/moyenne charge (`N = 1, C = 1` : `40,0 ms` vs `43,8 ms` ; `C = 16` : `596,7 ms` vs `617,9 ms`), mais loin au-delà (`N = 2, C = 64` : `641,0 ms` vs `1308,1 ms`).
-* **Interprétation** : une instance plafonne vers `25–26 req/s` (saturation vers `C = 1–2` pour `N = 1`, `C = 4–16` pour `N = 2` et `N = 4`). De `1` à `2` instances on fait `~2,03×`, mais de `1` à `4` on fait seulement `~3,25×` (sous-linéaire ; je n'ai pas mesuré pourquoi). Pour l'écart à la loi de Little à forte charge, c'est peut-être parce qu'on compare la médiane à la moyenne (tirée vers le haut par des requêtes lentes), sans l'avoir vérifié.
+  * Débit max : `25,90 req/s` (`N = 1`, déjà `22,83` à `C = 1`), `52,54 req/s` (`N = 2`), `84,08 req/s` (`N = 4`)
+  * Loi de Little (`latence ≈ C / débit`) : proche à faible/moyenne charge (`N = 1, C = 1` : `40,0 ms` vs `43,8 ms` ; `C = 16` : `596,7 ms` vs `617,9 ms`), mais loin au-delà (`N = 2, C = 64` : `641,0 ms` vs `1308,1 ms`)
+* **Interprétation** : une instance plafonne vers `25–26 req/s` (saturation vers `C = 1–2` pour `N = 1`, `C = 4–16` pour `N = 2` et `N = 4`). De `1` à `2` instances on fait `~2,03×`, mais de `1` à `4` on fait seulement `~3,25×` (sous-linéaire ; je n'ai pas mesuré pourquoi). Pour l'écart à la loi de Little à forte charge, c'est peut-être parce qu'on compare la médiane à la moyenne (tirée vers le haut par des requêtes lentes), sans l'avoir vérifié
 
 ### Partie 3 : corriger et re-mesurer
 
-* **Hypothèse** : découper `follows` en lots de 30 auteurs (`range(0, len(follows), 30)`) évite une requête par auteur et fait des paliers vers `F = 30`, `60` et `90`.
-* **Correction et protocole** : `patches/main_corrige.py` (dans `main.py`) fait une requête `IN` (limitée à 20 posts) par lot de 30 auteurs, puis garde les 20 posts les plus récents. Déployé sur `fixed1`, même protocole que la partie 1 (`f05` à `f100`).
+* **Hypothèse** : découper `follows` en lots de 30 auteurs (`range(0, len(follows), 30)`) évite une requête par auteur et fait des paliers vers `F = 30`, `60` et `90`
+* **Correction et protocole** : `patches/main_corrige.py` (dans `main.py`) fait une requête `IN` (limitée à 20 posts) par lot de 30 auteurs, puis garde les 20 posts les plus récents. Déployé sur `fixed1`, même protocole que la partie 1 (`f05` à `f100`)
 
 ![Fig. 3](figures/fig3.png)
 
@@ -61,7 +61,7 @@ Question du projet : qu'est-ce qui passe à l'échelle, jusqu'où, et pourquoi ?
   * `F = 30` : `484,4 ms` / `50,35 ms`
   * `F = 60` : `984,7 ms` / `74,6 ms`
   * `F = 100` : `1611,4 ms` / `97,5 ms` (~16,5× plus rapide)
-* **Interprétation et coûts** : hypothèse confirmée, avec des marches vers `~50 ms` (`F = 30..55`), `~68–75 ms` (`F = 60..85`) et `~86,5–97,5 ms` (`F = 90..100`) ; je n'ai pas creusé le petit écart à `F <= 25`. Côté coûts : plus de complexité (boucle + tri en mémoire), mais à `F = 100` on passe théoriquement à ~`81` entités lues (`1` User + `4 × 20`) soit `~47 $` pour 1 million de timelines au lieu de `1 178 $`, et le résultat reste le même (top 20 global des plus récents).
+* **Interprétation et coûts** : hypothèse confirmée, avec des marches vers `~50 ms` (`F = 30..55`), `~68–75 ms` (`F = 60..85`) et `~86,5–97,5 ms` (`F = 90..100`) ; je n'ai pas creusé le petit écart à `F <= 25`. Côté coûts : plus de complexité (boucle + tri en mémoire), mais à `F = 100` on passe théoriquement à ~`81` entités lues (`1` User + `4 × 20`) soit `~47 $` pour 1 million de timelines au lieu de `1 178 $`, et le résultat reste le même (top 20 global des plus récents)
 
 ## 3. Tableau des verdicts
 
@@ -75,16 +75,16 @@ Question du projet : qu'est-ce qui passe à l'échelle, jusqu'où, et pourquoi ?
 
 ## 4. Validité
 
-1. **Instances** : vérifié avec `X-Instance` : `1` instance en P1 et P3, et `1`, `2` ou `4` selon `N` en P2. OK.
-2. **Ordre des runs** : mélangé avec `shuf` dans `run_p1.sh` (l.22), `run_p2.sh` (l.11) et `run_p3.sh` (l.11), noté dans `logs/*_ordre.txt`, avec pauses (`3 s` ou `5 s`) et échauffement. Par contre, `N` a été testé dans l'ordre `1, 2, 4` et les parties se sont suivies le 26 novembre 2026 (`14h54` en P1, `15h10–15h32` en P2, `16h30` en P3), donc un effet d'ordre entre parties reste possible.
+1. **Instances** : vérifié avec `X-Instance` : `1` instance en P1 et P3, et `1`, `2` ou `4` selon `N` en P2. OK
+2. **Ordre des runs** : mélangé avec `shuf` dans `run_p1.sh` (l.22), `run_p2.sh` (l.11) et `run_p3.sh` (l.11), noté dans `logs/*_ordre.txt`, avec pauses (`3 s` ou `5 s`) et échauffement. Par contre, `N` a été testé dans l'ordre `1, 2, 4` et les parties se sont suivies le 26 novembre 2026 (`14h54` en P1, `15h10–15h32` en P2, `16h30` en P3), donc un effet d'ordre entre parties reste possible
 3. **Réseau** : environ `11` à `17 ms` (jusqu'à `21,75 ms` à `F = 100`).
-4. **Échecs** : tout statut `!= 200` compté en échec ; seuls `200` et `0` (timeout/erreur client Locust) vus. `0` échec en P1 et P3 ; `1` à `15` échecs en P2 pour `C = 16, 32, 64` (< 1,3 %), sans changer les tendances.
+4. **Échecs** : tout statut `!= 200` compté en échec ; seuls `200` et `0` (timeout/erreur client Locust) vus. `0` échec en P1 et P3 ; `1` à `15` échecs en P2 pour `C = 16, 32, 64` (< 1,3 %), sans changer les tendances
 5. **Chemin de code** : une première passe P3 a donné des `404` pendant la suppression de `fixed1` ; après suppression des 20 CSV, redéploiement de `fixed1` et relance, les 20 fichiers ont `0` échec (`200`, 1 instance). Le `grep -c` (`1`), `py_compile` et le saut à `F = 30` confirment le bon code.
-6. **Coût** : voir section 5 (`5,54 $` brut, `0,00 $` net).
+6. **Coût** : voir section 5 (`5,54 $` brut, `0,00 $` net)
 
 ## 5. Coût de la campagne
 
-Total brut : **5,54 $**, ramené à **0,00 $** net grâce à *Other savings*.
+Total brut : **5,54 $**, ramené à **0,00 $** net grâce à *Other savings*
 
 | Ligne (SKU) | Quantité | Coût brut |
 | :--- | :---: | :---: |
