@@ -75,11 +75,11 @@ Question du projet : qu'est-ce qui passe à l'échelle, jusqu'où, et pourquoi ?
 
 ## 4. Validité
 
-1. **Instances** : vérifié avec `X-Instance` : `1` instance en P1 et P3, et `1`, `2` ou `4` selon `N` en P2
-2. **Ordre des runs** : mélangé avec `shuf` dans `run_p1.sh` (l.22), `run_p2.sh` (l.11) et `run_p3.sh` (l.11), noté dans `logs/*_ordre.txt`, avec pauses (`3 s` ou `5 s`) et échauffement. Par contre, `N` a été testé dans l'ordre `1, 2, 4` et les parties se sont suivies le 26 novembre 2026 (`14h54` en P1, `15h10–15h32` en P2, `16h30` en P3), donc un effet d'ordre entre parties reste possible
-3. **Réseau** : environ `11` à `17 ms` (jusqu'à `21,75 ms` à `F = 100`).
-4. **Échecs** : tout statut `!= 200` compté en échec ; seuls `200` et `0` (timeout/erreur client Locust) vus. `0` échec en P1 et P3 ; `1` à `15` échecs en P2 pour `C = 16, 32, 64` (< 1,3 %), sans changer les tendances
-5. **Chemin de code** : une première passe P3 a donné des `404` pendant la suppression de `fixed1` ; après suppression des 20 CSV, redéploiement de `fixed1` et relance, les 20 fichiers ont `0` échec (`200`, 1 instance). Le `grep -c` (`1`), `py_compile` et le saut à `F = 30` confirment le bon code.
+1. **Instances** : oui, c'est bien ce qu'on attendait (`1` instance en P1 et P3, et `1`, `2` ou `4` selon `N` en P2), vérifié avec `X-Instance` plutôt qu'à partir de ce que dit `gcloud`
+2. **Ordre des runs** : les runs sont mélangés avec `shuf` dans `run_p1.sh`, `run_p2.sh` et `run_p3.sh` (gardé dans `logs/*_ordre.txt`), avec des pauses (`3 s` ou `5 s`) et un échauffement. Par contre, `N` a été fait dans l'ordre `1, 2, 4` et les parties se sont suivies le 26 novembre 2026, donc un effet d'ordre entre parties n'est pas exclu
+3. **Réseau** : environ `11` à `17 ms` (jusqu'à `21,75 ms` à `F = 100`), calculé avec `client - serveur`
+4. **Échecs** : tout statut différent de `200` est compté en échec ; on a vu `200` et `0` (erreur/délai côté client Locust). `0` échec en P1 et P3 ; `1` à `15` échecs en P2 pour `C = 16, 32, 64` (< 1,3 %), ce qui ne change pas les tendances
+5. **Chemin de code** : oui, vérifié : le `grep -c` (`1`), `py_compile` et le saut à `F = 30` confirment le code, et la première passe P3 en `404` (due à la suppression de `fixed1`) a été supprimée et refaite sur `fixed1` redéployée avec `0` échec (`200`, 1 instance).
 6. **Coût** : voir section 5 (`5,54 $` brut, `0,00 $` net)
 
 ## 5. Coût de la campagne
@@ -94,4 +94,4 @@ Total brut : **5,54 $**, ramené à **0,00 $** net grâce à *Other savings*
 | Instances frontend (`Frontend Instances`) | `4,96 h` | `0,00 $` |
 | Instances backend (`Backend Instances`) | `7,5 h` | `0,00 $` |
 | Autres lignes (Small Ops, logs, bande passante, Cloud Build, Artifact Registry) | Voir rapport GCP | `0,00 $` |
-```[cite: 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
