@@ -6,7 +6,7 @@ Question du projet : qu'est-ce qui passe à l'échelle, jusqu'où, et pourquoi ?
 
 * Appli déployée : https://monprojet-515813.ew.r.appspot.com
 * Projet `monprojet-515813`, région `europe-west1`, App Engine standard (`python312`) et Datastore
-* L'application est lancée avec `gunicorn -b :$PORT main:app`, sans option `--workers`, donc il y a 1 seul worker par instance (c'est la valeur par défaut de gunicorn)
+* L'application est lancée avec `gunicorn -b :$PORT main:app`, sans option `--workers`, donc il y a 1 seul worker par instance (val par défaut)
 * Version `default` (`app.yaml`) : classe `F1`, autoscaling jusqu'à 10 instances (versions `20261125t141537` et `20261126t140850`)
 * Versions `fixedN` (`deploy_fixed.sh`) : classe `B1`, manual scaling avec `N` instances (`fixed1`, `fixed2`, `fixed4`), déployées avec `--no-promote` et arrêtées après les mesures
 * Le client Locust tourne depuis Cloud Shell, chaque run dure environ 45 s
