@@ -144,20 +144,22 @@ Application déployée : https://monprojet-515813.ew.r.appspot.com
 1. **Instances** : oui ce sont celles que j'attendais (1 en Partie 1 et 3, puis 1, 2 ou 4 en Partie 2), je l'ai vérifié avec l'en-tête `X-Instance` et pas avec ce que dit `gcloud`
 2. **Indépendance des runs** : l'ordre des runs est mélangé avec `shuf` dans chaque partie et gardé dans `logs/`, avec des pauses de 3 à 5 s et un échauffement avant les runs, mais les versions de la Partie 2 ont été faites dans l'ordre N=1, 2, 4 et les trois parties se sont suivies le même jour donc je ne peux pas exclure un effet de l'ordre
 3. **Réseau** : environ 11 à 17 ms (latence client moins temps serveur), jusqu'à 21,75 ms pour F=100
-4. **Échecs** : j'ai compté comme échec tout statut différent de 200, j'ai vu 200 et le statut 0 qui n'est pas un code HTTP mais une erreur réseau côté client avant toute réponse (`gaierror` ou `ConnectionRefusedError`), seulement pour C=16, 32 et 64 (de 1 à 15 par fichier soit moins de 1,3 %), aucune réponse de l'application n'est en erreur (pas de 5xx) et je n'ai pas vérifié la cause (limite de Cloud Shell ou de la plateforme ?)
+4. **Échecs** : j'ai compté comme échec tout statut différent de 200 et j'ai vu deux sortes de problèmes
+   * Pendant les mesures : j'ai vu 200 et le statut 0 qui n'est pas un code HTTP mais une erreur réseau côté client avant toute réponse (`gaierror` ou `ConnectionRefusedError`), seulement pour C=16, 32 et 64 (de 1 à 15 par fichier soit moins de 1,3 %), aucune réponse de l'application n'est en erreur (pas de 5xx) et je n'ai pas vérifié la cause
+   * Pendant la création des jeux de données : l'écriture avec `bench/seed_exact.py` (par exemple le jeu de U=1000) restait bloquée longtemps puis la connexion se coupait, ou j'avais le message de temps limite dépassé avec un nouvel essai au bout de 2 s qui se répétait jusqu'à l'erreur, dans ce cas le jeu était écrit à moitié donc je le purgeais avec `--purge` et je recommençais tout (ça explique en partie les écritures et suppressions de la facture)
 5. **Chemin de code** : oui, le saut à F=30 en Partie 1 montre que le plan B est bien utilisé, et ma première campagne de la Partie 3 donnait des 404 car `fixed1` était en cours de suppression donc je mesurais la plateforme et pas mon code, je l'ai supprimée, j'ai redéployé `fixed1` et refait la Partie 3 (statut 200, 1 instance, 0 échec)
 6. **Coût** : voir section 5
 
 ## 5. Coût de la campagne
 
-D'après la page Facturation du 1er au 27 novembre 2026 : 7,96 $ brut, ramené à 0,00 $ net grâce aux économies affichées par la console
+D'après la page Facturation du 1er au 27 novembre 2026 : 7,96 $ brut
 
 | Ligne (SKU) | Quantité | Coût brut |
 |---|---|---|
-| Lectures Datastore (`Cloud Firestore Read Ops`) | 5 872 549 | 3,43 $ |
-| Écritures Datastore (`Cloud Firestore Entity Writes`) | 2 426 438 | 4,22 $ |
-| Suppressions Datastore (`Cloud Firestore Entity Deletes`) | 1 605 821 | 0,31 $ |
-| Petites opérations (`Cloud Firestore Small Ops`) | 2 870 680 | 0,00 $ |
-| Instances frontend (`Frontend Instances`, version par défaut) | 5,41 h | 0,00 $ |
-| Instances backend (`Backend Instances`, versions fixes) | 11,19 h | 0,00 $ |
+| Lectures Datastore | 5 872 549 | 3,43 $ |
+| Écritures Datastore | 2 426 438 | 4,22 $ |
+| Suppressions Datastore | 1 605 821 | 0,31 $ |
+| Petites opérations  | 2 870 680 | 0,00 $ |
+| Instances frontend | 5,41 h | 0,00 $ |
+| Instances backend | 11,19 h | 0,00 $ |
 | Autres (logs, bande passante, build, Artifact Registry) | 0,23 Gio, 0,15 Gio, 11 min, 0,53 Gio/mois | 0,00 $ |
