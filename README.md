@@ -1,6 +1,6 @@
 # TinyInsta passe-t-elle à l'échelle ? Benchmark 2026
 
-Projet Données massives et Cloud, rendu individuel
+Projet Données massives et Cloud
 
 Application déployée : https://monprojet-515813.ew.r.appspot.com
 
