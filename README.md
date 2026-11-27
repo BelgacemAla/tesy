@@ -60,7 +60,7 @@ Application déployée : https://monprojet-515813.ew.r.appspot.com
 * Le calcul colle avec les mesures : 31 requêtes × 15,6 ms = 484 ms à F=30 et 101 requêtes × 16 ms = 1616 ms à F=100
 * Réseau : latence client moins temps serveur donne environ 11 à 17 ms (jusqu'à 21,75 ms à F=100), c'est environ un tiers de la latence quand tout est rapide et seulement 1,3 % à F=100
 * Entités lues par timeline (calculé à partir du code) : 21 pour F ≤ 25 (1 User + 20 posts), 621 pour F=30 (1 + 31×20) et 2021 pour F=100 (1 + 101×20)
-* Prix d'après ma facture : 3,43 $ pour 5 872 549 lectures, soit environ 0,0584 $ pour 100 000 lectures (je n'ai pas vérifié la grille officielle)
+* Prix d'après ma facture : 3,43 $ pour 5 872 549 lectures, soit environ 0,0584 $ pour 100 000 lectures 
 * Coût de 1 million de timelines : environ 12 $ pour F ≤ 25, 363 $ pour F=30 et 1 180 $ pour F=100
 
 ### Partie 2 : capacité
