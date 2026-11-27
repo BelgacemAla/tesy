@@ -4,7 +4,7 @@ Question du projet : qu'est-ce qui passe à l'échelle, jusqu'où, et pourquoi ?
 
 ## 1. Montage
 
-* Application déployée (version par défaut) : https://monprojet-515813.ew.r.appspot.com
+* Appli déployée : https://monprojet-515813.ew.r.appspot.com
 * Projet `monprojet-515813`, région `europe-west1`, App Engine standard (`python312`) et Datastore
 * L'application est lancée avec `gunicorn -b :$PORT main:app`, sans option `--workers`, donc il y a 1 seul worker par instance (c'est la valeur par défaut de gunicorn)
 * Version `default` (`app.yaml`) : classe `F1`, autoscaling jusqu'à 10 instances (versions `20261125t141537` et `20261126t140850`)
