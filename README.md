@@ -33,7 +33,7 @@ Application déployée : https://monprojet-515813.ew.r.appspot.com
 * P : la requête s'arrête à 20 posts (index trié par auteur et date) donc le temps reste constant
 * F : plus il y a d'auteurs dans le `IN` plus il y a de choses à fusionner donc je pense que le temps monte doucement
 
-**Protocole** : version `fixed1` (1 instance), 1 seul utilisateur Locust (`-u 1`), un seul facteur change à la fois, on compare le temps serveur (en-tête `Server-Timing`) et la latence client
+**Protocole** : version `fixed1` de 1 instance, 1 seul utilisateur Locust, un seul facteur change à la fois, on compare le temps serveur (en-tête `Server-Timing`) et la latence client
 
 ![Fig. 1a](figures/fig1a.png)
 
